@@ -73,4 +73,4 @@ At any rate, consider this a bug that needs to be fixed.
 ddnsd responsibilities:
 
 * Stores current IP in memory
-* Checks 
+* Checks ip at given frequency
