@@ -1,0 +1,54 @@
+#!/usr/local/bin/php
+<?php
+namespace KS\Ddnsd;
+
+require_once __DIR__."/../vendor/autoload.php";
+
+$cmd = new \Commando\Command();
+$cmd->option('c')
+    ->aka('config-dir')
+    ->describedAs('The path containing ddnsd\'s configuration files');
+
+$cmd->option("h")
+    ->aka("help")
+    ->describedAs("Show help screen");
+
+$cmd->option("v")
+    ->aka("version")
+    ->describedAs("Echo version information and exit");
+
+if ($cmd['c']) {
+    $confdir = $cmd['c'];
+} else {
+    $confdir = "/etc/ddnsd";
+}
+
+if (!is_dir($confdir)) {
+    fwrite(STDERR, "Confdir $confdir not found!\n");
+    exit(10);
+}
+
+$mainConf = "$confdir/config";
+if (!is_file($mainConf)) {
+    fwrite(STDERR, "No main config file found at $mainConf!\n");
+    exit(20);
+}
+
+$conffiles = [];
+if (is_dir("$confdir/config.d")) {
+    $d = dir("$confdir/config.d");
+    while (($file = $d->read()) !== false) {
+        if (substr($d, 0, 1) === '.') {
+            continue;
+        }
+        $conffiles[] = "$confdir/config.d/$file";
+    }
+}
+sort($conffiles);
+array_unshift($conffiles, $mainConf);
+
+
+$config = new DdnsDaemonConfig($conffiles);
+$ddnsd = new DdnsDaemon($config);
+$ddnsd->run();
+

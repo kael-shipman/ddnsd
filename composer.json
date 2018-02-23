@@ -1,0 +1,30 @@
+{
+    "name": "kael-shipman/ddnsd",
+    "description": "A small dynamic-dns daemon that runs on your computer and manually updates the DNS records at your DNS provider when it detects changes.",
+    "keywords": [ "ddns", "dynamic dns", "dns" ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kael Shipman and Contributors",
+            "homepage": "https://github.com/kael-shipman/ddnsd/graphs/contributors"
+        }
+    ],
+    "require": {
+        "php" : ">=7.1",
+        "guzzlehttp/guzzle": "^6.0.0",
+        "laktak/hjson": "^2.0.0",
+        "kael-shipman/php-daemon": "v0.3.x-dev",
+        "nategood/commando": "~0.2.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "KS\\Ddnsd\\": "src/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com:kael-shipman/php-daemon.git"
+        }
+    ]
+}

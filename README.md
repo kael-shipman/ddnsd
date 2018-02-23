@@ -11,18 +11,28 @@ DDNSd is a simple, HTTP-based dynamic dns solution. It is based on the idea that
 
 ## Usage
 
-The daemon can manage any number of different accounts and domains. All of these are configured using configuration files found at `/etc/ddnsd/config.d/`.
+The daemon can manage any number of different accounts and domains. All of these are configured using configuration files found at `/etc/ddnsd/config` and `/etc/ddnsd/config.d/`. Objects in files are merged using the following algorithm:
 
-The daemon is usually managed via systemd, though you can also start and manage it directly. For example, to use a different config file location:
+1. Config files in the `config.d` directory are sorted alphabetically;
+2. They are then merged (recursively), with later values overwriting earlier ones;
+3. The resulting object is then merged on top of the global `config` file to create a final config object.
+
+The daemon is usually managed via systemd, though you can also start and manage it directly. For example, to use a different config location:
 
 ```
-$ ddnsd --config-dir=/home/me/.config/ddns/config.d
+$ ddnsd --config-dir=/home/me/.config/ddns
 ```
+
+Currently, the only command-line options recognized are the following:
+
+* `-v|--version` -- Echo version information and exit
+* `-h|--help` -- View usage information
+* `-c|--config-dir` -- Change the location to look for config files
 
 
 ### Config File
 
-ddnsd's config file is formatted in [hjson](http://hjson.org/) (or regular json). You can set optional global parameters in the main body, then specify domain configurations in one or more domain sections in the "profiles" key. For each domain, you'll need to specify the provider (more on this in a minute), your username and password (again, more in a minute), and then a list of A records to update. Additionally, you can specify a time-to-live (TTL) value, though it's not required (defaults to 3600 (1 hour)).
+ddnsd's config files are formatted in [hjson](http://hjson.org/) (or regular json). You can set optional global parameters in the main body, then specify domain configurations in one or more domain sections in the "profiles" key. For each domain, you'll need to specify the provider (more on this in a minute), your username and password (again, more in a minute), and then a list of A records to update. Additionally, you can specify a time-to-live (TTL) value, though it's not required (defaults to 3600 (1 hour)).
 
 A sample config file looks like this:
 
@@ -32,15 +42,13 @@ A sample config file looks like this:
     profiles: {
         example.com: {
             provider: name.com
-            username: me@example.com
-            password: my-password12345
-            records: [ "@", "sub1", "sub2" ]
+            credentials: USERPASS:me@example.com|my-password12345
+            subdomains: [ "@", "sub1", "sub2" ]
         },
         example2.com: {
             provider: bluehost
-            username: me@example.com
-            password: weak-bluehost-password
-            records: [ "@", "freak", "out" ]
+            credentials: OAUTH:aaaabbbbccccdddd1111222233334444
+            subdomains: [ "@", "freak", "out" ]
             ttl: 14000
         }
     }
@@ -53,6 +61,28 @@ A sample config file looks like this:
 Because of the way ddnsd is implemented, providers must be "known". That is, you can't put any arbitrary provider in and expect it to work. Instead, you'll have to use a provider for which a ddnsd-compatible worker has been created.
 
 To allow for better ecosystem development, ddnsd makes no assumptions about how a provider worker is implemented or even in what language. It simply looks for an executable called `ddnsd-provider-[name]` somewhere in your path. Because of this, you can fairly easily implement your own provider executables in whatever language you're comfortable in and put them in your path. The only built-in provider is name.com because this is currently my own DNS provider.
+
+#### Provider Interface
+
+To allow for maximal interoperability, we've defined the provider interface at the command line level. It is as follows:
+
+```
+    ddnsd-provider-[name] change-ip [config-object]
+
+    Commands
+
+        change-ip           Change the IP address of the subdomains given in the config
+                            object to the ip given in the config object.
+```
+
+Note that, for security, credentials are STRIPPED from the config object and are passed to subcommands via the environment variable `DDNSD_CREDENTIALS`. This variable MUST contain a string composed of the following parts:
+
+1. Credential protocol followed by a colon: `USERPASS:`, `APIKEY:`, `OAUTH:`
+2. Protocol-specific data
+
+Provider implementations are responsible for explicitly accepting or rejecting credential protocols and formats, and parsing and using them accordingly.
+
+All other configuration specified in the "profile" section is preserved, though may not be used by provider implementations.
 
 
 ### Credentials
@@ -74,3 +104,5 @@ ddnsd responsibilities:
 
 * Stores current IP in memory
 * Checks ip at given frequency
+* On IP change, iterates through domain profiles and calls `change-ip` on providers
+
