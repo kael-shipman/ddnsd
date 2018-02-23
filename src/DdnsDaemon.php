@@ -18,61 +18,64 @@ class DdnsDaemon extends \KS\AbstractDaemon
 
     public function run()
     {
-        $this->log("Starting ddnsd", LOG_INFO);
+        $this->log("Starting ddnsd", LOG_INFO, 'syslog', true);
         $this->mark = time()-($this->config->getCheckInterval()+1);
-        $run = true;
-        do {
-            if ($this->mark < time()-$this->config->getCheckInterval()) {
-                $this->mark = time();
+        try {
+            do {
+                if ($this->mark < time()-$this->config->getCheckInterval()) {
+                    $this->mark = time();
 
-                try {
-                    foreach($this->config->getProfiles() as $domain => $p) {
-                        foreach($p['subdomains'] as $subdomain) {
-                            if ($subdomain === '@') {
-                                $hostname = $domain;
-                            } else {
-                                $hostname = "$subdomain.$domain";
-                            }
+                    try {
+                        foreach($this->config->getProfiles() as $domain => $p) {
+                            foreach($p['subdomains'] as $subdomain) {
+                                if ($subdomain === '@') {
+                                    $hostname = $domain;
+                                } else {
+                                    $hostname = "$subdomain.$domain";
+                                }
 
-                            // If our IP has changed, go change all our records
-                            if ($this->getRegisteredIp($hostname) !== $this->getSelfIp()) {
-                                $config = $p;
-                                unset($config['provider'], $config['credentials']);
-                                $config['ip'] = $this->getSelfIp();
-                                $config = str_replace(["'"], ["'\"'\"'"], json_encode($config));
+                                // If our IP has changed, go change all our records
+                                if ($this->getRegisteredIp($hostname) !== $this->getSelfIp()) {
+                                    $config = $p;
+                                    unset($config['provider'], $config['credentials']);
+                                    $config['ip'] = $this->getSelfIp();
+                                    $config = str_replace(["'"], ["'\"'\"'"], json_encode($config));
 
-                                putenv("DDNSD_CREDENTIALS='".str_replace(["'"], ["'\"'\"'"], $p['credentials']));
-                                $command = $this->config->getProviderPrefix().$p['provider']." change-ip '$config'";
-                                for ($i = 0; $i < 3; $i++) {
-                                    $this->log("Running provider command to update ip: $command", LOG_DEBUG);
-                                    exec($command, $output, $returnVal);
-                                    if ($returnVal == 0) {
-                                        break;
-                                    } else {
-                                        sleep(5);
+                                    putenv("DDNSD_CREDENTIALS='".str_replace(["'"], ["'\"'\"'"], $p['credentials']));
+                                    $command = $this->config->getProviderPrefix().$p['provider']." change-ip '$config'";
+                                    for ($i = 0; $i < 3; $i++) {
+                                        $this->log("Running provider command to update ip: $command", LOG_DEBUG);
+                                        exec($command, $output, $returnVal);
+                                        if ($returnVal == 0) {
+                                            break;
+                                        } else {
+                                            sleep(5);
+                                        }
                                     }
-                                }
-                                putenv("DDNSD_CREDENTIALS=");
+                                    putenv("DDNSD_CREDENTIALS=");
 
-                                if ($returnVal > 0) {
-                                    $this->log("Couldn't execute provider sub-command!", LOG_ERR);
-                                }
+                                    if ($returnVal > 0) {
+                                        $this->log("Couldn't execute provider sub-command!", LOG_ERR);
+                                    } else {
+                                        $this->log("Provider command successful!", LOG_DEBUG);
+                                    }
 
-                                unset($config, $command, $output, $returnVal);
+                                    unset($config, $command, $output, $returnVal);
+                                }
                             }
                         }
+                    } catch (\KS\ShutdownException $e) {
+                        throw $e;
+                    } catch (\Exception $e) {
+                        $this->log("Exception thrown: {$e->getMessage()}", LOG_ERR);
                     }
-                } catch (\KS\ShutdownException $e) {
-                    $run = false;
-                } catch (\Exception $e) {
-                    $this->log("Exception thrown: {$e->getMessage()}", LOG_ERR);
                 }
-            }
 
-            if ($run) {
                 sleep($this->config->getRunLoopInterval());
-            }
-        } while ($run);
+            } while (true);
+        } catch (\KS\ShutdownException $e) {
+            $this->log("Caught ShutdownException. Exiting.", LOG_DEBUG);
+        }
     }
 
     protected function getSelfIp()
@@ -137,7 +140,7 @@ class DdnsDaemon extends \KS\AbstractDaemon
 
     public function shutdown()
     {
-        $this->log("Shutting down.", LOG_INFO);
+        $this->log("Shutting down.", LOG_INFO, 'syslog', true);
         throw new \KS\ShutdownException("Shutting down {$this->logIdentifier}");
     }
 }
