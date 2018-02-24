@@ -18,7 +18,7 @@ class DdnsDaemon extends \KS\AbstractDaemon
 
     public function run()
     {
-        $this->log("Starting ddnsd", LOG_INFO, 'syslog', true);
+        $this->log("Starting ddnsd", LOG_INFO, [ "syslog", STDERR ], true);
         $this->mark = time()-($this->config->getCheckInterval()+1);
         try {
             do {
@@ -56,7 +56,7 @@ class DdnsDaemon extends \KS\AbstractDaemon
                                     putenv("DDNSD_CREDENTIALS=");
 
                                     if ($returnVal > 0) {
-                                        $this->log("Couldn't execute provider sub-command!", LOG_ERR);
+                                        $this->log("Couldn't execute provider sub-command!", LOG_ERR, [ "syslog", STDERR ]);
                                     } else {
                                         $this->log("Provider command successful!", LOG_DEBUG);
                                     }
@@ -65,16 +65,16 @@ class DdnsDaemon extends \KS\AbstractDaemon
                                 }
                             }
                         }
-                    } catch (\KS\ShutdownException $e) {
+                    } catch (\KS\Exception\Shutdown $e) {
                         throw $e;
                     } catch (\Exception $e) {
-                        $this->log("Exception thrown: {$e->getMessage()}", LOG_ERR);
+                        $this->log("Exception thrown: {$e->getMessage()}", LOG_ERR, [ "syslog", STDERR ]);
                     }
                 }
 
                 sleep($this->config->getRunLoopInterval());
             } while (true);
-        } catch (\KS\ShutdownException $e) {
+        } catch (\KS\Exception\Shutdown $e) {
             $this->log("Caught ShutdownException. Exiting.", LOG_DEBUG);
         }
     }
@@ -101,7 +101,7 @@ class DdnsDaemon extends \KS\AbstractDaemon
         } else {
             $err = "Couldn't get our IP address. Is Dyndns down?";
             $this->log($err, LOG_ALERT);
-            throw new Exceptions\SelfIPNotFound($err);
+            throw new Exception\SelfIPNotFound($err);
         }
     }
 
@@ -129,7 +129,8 @@ class DdnsDaemon extends \KS\AbstractDaemon
                 $this->log("Tried 3 times to get IP for $hostname but couldn't.", LOG_WARNING);
             } else {
                 preg_match("/^PING $hostname \(([^)]+)/", $output[0], $ip);
-                $this->registeredIps[$hostname] = $ip[1];
+                $ip = $ip[1];
+                $this->registeredIps[$hostname] = $ip;
                 $this->lastIpCheck = time();
                 $this->log("IP for $hostname found: $ip. Setting ip timestamp to {$this->lastIpCheck}", LOG_DEBUG);
             }
@@ -141,8 +142,8 @@ class DdnsDaemon extends \KS\AbstractDaemon
 
     public function shutdown()
     {
-        $this->log("Shutting down.", LOG_INFO, 'syslog', true);
-        throw new \KS\ShutdownException("Shutting down {$this->logIdentifier}");
+        $this->log("Shutting down.", LOG_INFO, [ "syslog", STDERR ], true);
+        throw new \KS\Exception\Shutdown("Shutting down {$this->logIdentifier}");
     }
 }
 

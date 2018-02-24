@@ -1,5 +1,5 @@
 <?php
-namespace KS\Ddnsd\Exceptions;
+namespace KS\Ddnsd\Exception;
 
 class SelfIpNotFound extends \RuntimeException { }
 
