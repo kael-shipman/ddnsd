@@ -39,9 +39,10 @@ class DdnsDaemon extends \KS\AbstractDaemon
                                     $config = $p;
                                     unset($config['provider'], $config['credentials']);
                                     $config['ip'] = $this->getSelfIp();
+                                    $config['domain'] = $domain;
                                     $config = str_replace(["'"], ["'\"'\"'"], json_encode($config));
 
-                                    putenv("DDNSD_CREDENTIALS='".str_replace(["'"], ["'\"'\"'"], $p['credentials']));
+                                    putenv("DDNSD_CREDENTIALS='".str_replace(["'"], ["'\"'\"'"], $p['credentials'])."'");
                                     $command = $this->config->getProviderPrefix().$p['provider']." change-ip '$config'";
                                     for ($i = 0; $i < 3; $i++) {
                                         $this->log("Running provider command to update ip: $command", LOG_DEBUG);
@@ -127,7 +128,7 @@ class DdnsDaemon extends \KS\AbstractDaemon
                 $this->registeredIps[$hostname] = null;
                 $this->log("Tried 3 times to get IP for $hostname but couldn't.", LOG_WARNING);
             } else {
-                preg_match("/^PING $hostname \(([^)]+)/", $output, $ip);
+                preg_match("/^PING $hostname \(([^)]+)/", $output[0], $ip);
                 $this->registeredIps[$hostname] = $ip[1];
                 $this->lastIpCheck = time();
                 $this->log("IP for $hostname found: $ip. Setting ip timestamp to {$this->lastIpCheck}", LOG_DEBUG);
