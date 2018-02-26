@@ -4,14 +4,14 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "7bd1e1ec2590f62dd911a43de0474e04",
+    "content-hash": "efc3ae3ad38d84b6efacca581c2c0161",
     "packages": [
         {
             "name": "kael-shipman/php-daemon",
             "version": "v0.3.x-dev",
             "source": {
                 "type": "git",
-                "url": "git@github.com:kael-shipman/php-daemon.git",
+                "url": "git@github.com:kael-shipman/php-executables.git",
                 "reference": "bb714b5ed775e821ce11e0054d3d2c87576a9d05"
             },
             "require": {

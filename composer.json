@@ -23,7 +23,7 @@
     "repositories": [
         {
             "type": "git",
-            "url": "git@github.com:kael-shipman/php-daemon.git"
+            "url": "git@github.com:kael-shipman/php-executables.git"
         }
     ]
 }

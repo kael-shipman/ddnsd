@@ -36,6 +36,7 @@ class DdnsDaemon extends \KS\AbstractDaemon
 
                                 // If our IP has changed, go change all our records
                                 if ($this->getRegisteredIp($hostname) !== $this->getSelfIp()) {
+                                    $this->log("IP changed. Updating records.", LOG_INFO);
                                     $config = $p;
                                     unset($config['provider'], $config['credentials']);
                                     $config['ip'] = $this->getSelfIp();
@@ -62,6 +63,8 @@ class DdnsDaemon extends \KS\AbstractDaemon
                                     }
 
                                     unset($config, $command, $output, $returnVal);
+                                } else {
+                                    $this->log("IP hasn't changed. Not updating records.", LOG_INFO);
                                 }
                             }
                         }
