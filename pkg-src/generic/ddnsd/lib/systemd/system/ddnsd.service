@@ -1,0 +1,10 @@
+[Unit]
+Description=ddnsd - a lightweight daemon that keeps your dns records up to date when your IP address changes
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/ddnsd
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

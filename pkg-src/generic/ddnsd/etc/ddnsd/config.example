@@ -1,0 +1,13 @@
+# hjson (@see https://hjson.org)
+{
+    log-level: 3
+    check-interval: 3600
+    profiles: {
+        my-site.com: {
+            provider: name.com
+            credentials: HTTPAUTH:ddnsd|my-api-key.aaaabbbbccccdddd1111222233334444
+            subdomains: [ "@", "sub-domain1", "sub-domain2" ]
+            ttl: 14000
+        }
+    }
+}

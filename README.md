@@ -6,7 +6,9 @@ DDNSd is a simple, HTTP-based dynamic dns solution. It is based on the idea that
 
 ## Installation
 
-(TBD)
+If possible, you should install `ddnsd` via your OS's package manager. Currently, however, the only packages available are for Debian-based distros (which you can get at packages.kaelshipman.me).
+
+As an alternative, you can simply download the executable directly from the [github releases page](https://github.com/kael-shipman/php-ddnsd/releases/) and install it in your path. If you do that, you'll probably also want to install the systemd files and other auxiliary files, which you can find in the [`pkg-src/generic/` directory](/pkg-src/generic).
 
 
 ## Usage

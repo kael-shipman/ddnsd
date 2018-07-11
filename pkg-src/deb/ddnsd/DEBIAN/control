@@ -1,0 +1,12 @@
+Package: ddnsd
+Version: ::VERSION::
+Section: free
+Priority: optional
+Architecture: all
+Depends: php-cli, php-mbstring
+Installed-Size: 0
+Maintainer: Kael Shipman <kael.shipman@gmail.com>
+Description: A small daemon that watches for IP address changes and updates DNS accordingly
+ ddnsd is a small daemon (written in PHP and compiled to phar) that pings the outside
+ world periodically to see if your IP address has changed. When it detects a change, it then
+ updates configured dns records by calling one of the `ddnsd-provider-*` workers.
