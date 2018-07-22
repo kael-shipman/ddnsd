@@ -4,7 +4,6 @@ set -e
 
 function setup_env() {
     setup_deb_env $@
-    rm -Rf "$builddir"/*
 
     if ! command -v philer &>/dev/null; then
         >&2 echo
