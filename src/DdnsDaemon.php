@@ -43,8 +43,13 @@ class DdnsDaemon extends \KS\AbstractDaemon
                                     $config['domain'] = $domain;
                                     $config = str_replace(["'"], ["'\"'\"'"], json_encode($config));
 
-                                    putenv("DDNSD_CREDENTIALS='".str_replace(["'"], ["'\"'\"'"], $p['credentials'])."'");
+                                    putenv("DDNSD_CREDENTIALS=".str_replace(["'"], ["'\"'\"'"], $p['credentials']));
                                     $command = $this->config->getProviderPrefix().$p['provider']." change-ip '$config'";
+
+                                    $this->log("Config: $config", LOG_DEBUG);
+                                    $this->log("Credentials: DDNSD_CREDENTIALS=".str_replace(["'"], ["'\"'\"'"], $p['credentials']), LOG_DEBUG);
+                                    $this->log("Command: $command", LOG_DEBUG);
+
                                     for ($i = 0; $i < 3; $i++) {
                                         $this->log("Running provider command to update ip: $command", LOG_DEBUG);
                                         exec($command, $output, $returnVal);
@@ -54,7 +59,7 @@ class DdnsDaemon extends \KS\AbstractDaemon
                                             sleep(5);
                                         }
                                     }
-                                    putenv("DDNSD_CREDENTIALS=");
+                                    putenv("DDNSD_CREDENTIALS");
 
                                     if ($returnVal > 0) {
                                         $this->log("Couldn't execute provider sub-command!", LOG_ERR, [ "syslog", STDERR ]);
